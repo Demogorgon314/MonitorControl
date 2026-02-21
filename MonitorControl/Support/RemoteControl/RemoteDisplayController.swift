@@ -54,6 +54,51 @@ final class RemoteDisplayController {
     }
   }
 
+  func setVolume(displayId: UInt32, valuePercent: Int) throws -> RemoteDisplayStatus {
+    guard (0 ... 100).contains(valuePercent) else {
+      throw RemoteDisplayControllerError.invalidValue(message: "value must be between 0 and 100")
+    }
+    return try self.performOnMain {
+      try self.ensureServiceAvailable()
+      guard let display = DisplayManager.shared.getAllDisplays().first(where: { $0.identifier == displayId }), !display.isDummy else {
+        throw RemoteDisplayControllerError.displayNotFound(displayId: displayId)
+      }
+      guard let otherDisplay = display as? OtherDisplay, self.canControlVolume(display: otherDisplay) else {
+        throw RemoteDisplayControllerError.unsupportedOperation(message: "volume control is not supported for display \(displayId)", displayIds: [displayId])
+      }
+      self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
+      return self.buildStatus(for: otherDisplay)
+    }
+  }
+
+  func setVolumeForAll(valuePercent: Int) throws -> [RemoteDisplayStatus] {
+    guard (0 ... 100).contains(valuePercent) else {
+      throw RemoteDisplayControllerError.invalidValue(message: "value must be between 0 and 100")
+    }
+    return try self.performOnMain {
+      try self.ensureServiceAvailable()
+      let displays = DisplayManager.shared.getAllDisplays().filter { !$0.isDummy }
+      let controllableDisplays: [OtherDisplay] = displays.compactMap { display in
+        guard let otherDisplay = display as? OtherDisplay, self.canControlVolume(display: otherDisplay) else {
+          return nil
+        }
+        return otherDisplay
+      }
+
+      if controllableDisplays.isEmpty {
+        throw RemoteDisplayControllerError.unsupportedOperation(
+          message: "volume control is not supported for connected displays",
+          displayIds: displays.map(\.identifier)
+        )
+      }
+
+      for otherDisplay in controllableDisplays {
+        self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
+      }
+      return controllableDisplays.map { self.buildStatus(for: $0) }
+    }
+  }
+
   func setPower(displayId: UInt32, state: RemoteRequestedPowerState) throws -> UInt32 {
     try self.performOnMain {
       try self.ensureServiceAvailable()
@@ -111,13 +156,15 @@ final class RemoteDisplayController {
   private func buildStatus(for display: Display) -> RemoteDisplayStatus {
     let friendlyName = display.readPrefAsString(key: .friendlyName).isEmpty ? display.name : display.readPrefAsString(key: .friendlyName)
     let brightnessValue = max(0, min(100, Int((display.getBrightness() * 100).rounded())))
+    let volumeValue = self.getVolumeValue(display: display)
     let type: RemoteDisplayType = display is AppleDisplay ? .apple : .other
 
     let hasPowerControl = !display.isDummy
     let powerState: RemotePowerState = display.isDummy ? .unknown : (display.readPrefAsBool(key: .remoteControlSimulatedPowerOff) ? .off : .on)
 
     let brightnessCapability = !display.isDummy && !display.readPrefAsBool(key: .unavailableDDC, for: .brightness)
-    let capabilities = RemoteDisplayCapabilities(brightness: brightnessCapability, power: hasPowerControl)
+    let volumeCapability = self.canControlVolume(display: display)
+    let capabilities = RemoteDisplayCapabilities(brightness: brightnessCapability, volume: volumeCapability, power: hasPowerControl)
     return RemoteDisplayStatus(
       id: display.identifier,
       name: display.name,
@@ -126,6 +173,7 @@ final class RemoteDisplayController {
       isVirtual: display.isVirtual,
       isDummy: display.isDummy,
       brightness: brightnessValue,
+      volume: volumeValue,
       powerState: powerState,
       capabilities: capabilities
     )
@@ -143,6 +191,37 @@ final class RemoteDisplayController {
   private func restoreBrightnessAfterSimulatedWake(display: Display) -> Float {
     let restoreBrightness = display.prefExists(key: .remoteControlSimulatedPowerRestoreBrightness) ? display.readPrefAsFloat(key: .remoteControlSimulatedPowerRestoreBrightness) : 0.5
     return max(0.01, min(1, restoreBrightness))
+  }
+
+  private func canControlVolume(display: Display) -> Bool {
+    guard let otherDisplay = display as? OtherDisplay else {
+      return false
+    }
+    return self.canControlVolume(display: otherDisplay)
+  }
+
+  private func canControlVolume(display: OtherDisplay) -> Bool {
+    !display.isDummy && !display.isSw() && !display.readPrefAsBool(key: .unavailableDDC, for: .audioSpeakerVolume)
+  }
+
+  private func getVolumeValue(display: Display) -> Int? {
+    guard let otherDisplay = display as? OtherDisplay, self.canControlVolume(display: otherDisplay) else {
+      return nil
+    }
+    let value = otherDisplay.setupSliderCurrentValue(command: .audioSpeakerVolume)
+    return max(0, min(100, Int((value * 100).rounded())))
+  }
+
+  private func applyVolume(valuePercent: Int, to display: OtherDisplay) {
+    let normalized = max(0, min(1, Float(valuePercent) / 100.0))
+    let isMuteTransition = (display.readPrefAsInt(for: .audioMuteScreenBlank) == 1 && normalized > 0) || (display.readPrefAsInt(for: .audioMuteScreenBlank) != 1 && normalized == 0)
+    if isMuteTransition {
+      display.toggleMute(fromVolumeSlider: true)
+    }
+    if !display.readPrefAsBool(key: .enableMuteUnmute) || normalized != 0 {
+      display.writeDDCValues(command: .audioSpeakerVolume, value: display.convValueToDDC(for: .audioSpeakerVolume, from: normalized))
+    }
+    display.savePref(normalized, for: .audioSpeakerVolume)
   }
 
   private func performOnMain<T>(_ block: @escaping () throws -> T) throws -> T {

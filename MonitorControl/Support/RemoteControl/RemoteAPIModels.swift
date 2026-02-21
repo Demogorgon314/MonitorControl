@@ -22,6 +22,7 @@ enum RemoteRequestedPowerState: String, Codable {
 
 struct RemoteDisplayCapabilities: Codable {
   let brightness: Bool
+  let volume: Bool
   let power: Bool
 }
 
@@ -33,6 +34,7 @@ struct RemoteDisplayStatus: Codable {
   let isVirtual: Bool
   let isDummy: Bool
   let brightness: Int
+  let volume: Int?
   let powerState: RemotePowerState
   let capabilities: RemoteDisplayCapabilities
 }
@@ -77,6 +79,10 @@ struct RemoteBrightnessRequest: Decodable {
 
 struct RemotePowerRequest: Decodable {
   let state: RemoteRequestedPowerState
+}
+
+struct RemoteVolumeRequest: Decodable {
+  let value: Int
 }
 
 struct RemoteHTTPRequest {

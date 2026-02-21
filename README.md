@@ -117,6 +117,8 @@ Endpoints:
 - `GET /api/v1/displays`
 - `POST /api/v1/displays/{id}/brightness` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/brightness` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/{id}/volume` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/volume` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/{id}/power` with `{ "state": "on" | "off" }`
 - `POST /api/v1/displays/power` with `{ "state": "on" | "off" }`
 
@@ -134,6 +136,12 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"value":60}' \
   "http://$HOST/api/v1/displays/69733184/brightness"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"value":35}' \
+  "http://$HOST/api/v1/displays/69733184/volume"
 
 curl -X POST \
   -H "Authorization: Bearer $TOKEN" \

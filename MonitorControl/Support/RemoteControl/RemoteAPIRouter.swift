@@ -59,6 +59,15 @@ final class RemoteAPIRouter {
       } catch {
         return self.mapDisplayError(error)
       }
+    case "/api/v1/displays/volume":
+      guard let payload: RemoteVolumeRequest = self.decodeJSONBody(request: request) else {
+        return .error(statusCode: 400, code: "invalid_json", message: "request body must be valid JSON")
+      }
+      do {
+        return .json(statusCode: 200, payload: RemoteDisplaysResponse(displays: try self.displayController.setVolumeForAll(valuePercent: payload.value)))
+      } catch {
+        return self.mapDisplayError(error)
+      }
     case "/api/v1/displays/power":
       guard let payload: RemotePowerRequest = self.decodeJSONBody(request: request) else {
         return .error(statusCode: 400, code: "invalid_json", message: "request body must be valid JSON")
@@ -90,6 +99,17 @@ final class RemoteAPIRouter {
       }
       do {
         return .json(statusCode: 200, payload: RemoteSingleDisplayResponse(display: try self.displayController.setBrightness(displayId: displayId, valuePercent: payload.value)))
+      } catch {
+        return self.mapDisplayError(error)
+      }
+    }
+
+    if operation == "volume" {
+      guard let payload: RemoteVolumeRequest = self.decodeJSONBody(request: request) else {
+        return .error(statusCode: 400, code: "invalid_json", message: "request body must be valid JSON")
+      }
+      do {
+        return .json(statusCode: 200, payload: RemoteSingleDisplayResponse(display: try self.displayController.setVolume(displayId: displayId, valuePercent: payload.value)))
       } catch {
         return self.mapDisplayError(error)
       }
