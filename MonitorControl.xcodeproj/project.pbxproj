@@ -44,6 +44,10 @@
 		C0A100142EAA000100000001 /* RemoteDisplayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100042EAA000100000001 /* RemoteDisplayController.swift */; };
 		C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100052EAA000100000001 /* RemoteControlServer.swift */; };
 		C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */; };
+		C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */; };
+		C0A100192EAA000100000001 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001A2EAA000100000001 /* NIOCore */; };
+		C0A1001B2EAA000100000001 /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001C2EAA000100000001 /* NIOHTTP1 */; };
+		C0A1001D2EAA000100000001 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001E2EAA000100000001 /* NIOPosix */; };
 		AA9AE86F26B5BF3D00B6CA65 /* OSD.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA9AE86E26B5BF3D00B6CA65 /* OSD.framework */; };
 		AA9AE87126B5BFB700B6CA65 /* CoreDisplay.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA9AE87026B5BFB700B6CA65 /* CoreDisplay.framework */; };
 		AAB2F638273ED099004AB5A4 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = AAB2F637273ED099004AB5A4 /* .swiftlint.yml */; };
@@ -137,6 +141,7 @@
 		C0A100042EAA000100000001 /* RemoteDisplayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteDisplayController.swift; sourceTree = "<group>"; };
 		C0A100052EAA000100000001 /* RemoteControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlServer.swift; sourceTree = "<group>"; };
 		C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlTokenStore.swift; sourceTree = "<group>"; };
+		C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNIORequestHandler.swift; sourceTree = "<group>"; };
 		AA99E81527622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Main.strings"; sourceTree = "<group>"; };
 		AA99E81627622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InternetAccessPolicy.strings"; sourceTree = "<group>"; };
 		AA99E81727622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -201,6 +206,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA9AE87126B5BFB700B6CA65 /* CoreDisplay.framework in Frameworks */,
+				C0A1001D2EAA000100000001 /* NIOPosix in Frameworks */,
+				C0A1001B2EAA000100000001 /* NIOHTTP1 in Frameworks */,
+				C0A100192EAA000100000001 /* NIOCore in Frameworks */,
 				AA70817C27046B9800CC5625 /* Sparkle in Frameworks */,
 				AA44E703270377C200E06865 /* KeyboardShortcuts in Frameworks */,
 				6CD35F53264FFFC6001F1344 /* SimplyCoreAudio in Frameworks */,
@@ -343,6 +351,7 @@
 				C0A100042EAA000100000001 /* RemoteDisplayController.swift */,
 				C0A100052EAA000100000001 /* RemoteControlServer.swift */,
 				C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */,
+				C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */,
 			);
 			path = RemoteControl;
 			sourceTree = "<group>";
@@ -420,6 +429,9 @@
 			packageProductDependencies = (
 				6CD35F52264FFFC6001F1344 /* SimplyCoreAudio */,
 				6CD35F5526500008001F1344 /* MediaKeyTap */,
+				C0A1001A2EAA000100000001 /* NIOCore */,
+				C0A1001C2EAA000100000001 /* NIOHTTP1 */,
+				C0A1001E2EAA000100000001 /* NIOPosix */,
 				AA44E702270377C200E06865 /* KeyboardShortcuts */,
 				AA70817B27046B9800CC5625 /* Sparkle */,
 				AAD7DD332CAFF3D90062822F /* Settings */,
@@ -503,6 +515,7 @@
 				6CD35F5A2650003F001F1344 /* XCRemoteSwiftPackageReference "Settings" */,
 				AA44E701270377C200E06865 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				AA70817A27046B9800CC5625 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */,
 			);
 			productRefGroup = 56754EAC1D9A4016007BCDC5 /* Products */;
 			projectDirPath = "";
@@ -668,6 +681,7 @@
 				AA25F6D126E681D30087F3A2 /* KeyboardPrefsViewController.swift in Sources */,
 				F01B069F228221B7008E64DB /* SliderHandler.swift in Sources */,
 				C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */,
+				C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */,
 				C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */,
 				C0A100122EAA000100000001 /* RemoteAPIRequestParser.swift in Sources */,
 				C0A100132EAA000100000001 /* RemoteAPIRouter.swift in Sources */,
@@ -1099,6 +1113,14 @@
 				kind = branch;
 			};
 		};
+		C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.40.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1126,6 +1148,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6CD35F5A2650003F001F1344 /* XCRemoteSwiftPackageReference "Settings" */;
 			productName = Settings;
+		};
+		C0A1001A2EAA000100000001 /* NIOCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOCore;
+		};
+		C0A1001C2EAA000100000001 /* NIOHTTP1 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOHTTP1;
+		};
+		C0A1001E2EAA000100000001 /* NIOPosix */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOPosix;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
