@@ -12,10 +12,10 @@
             <objects>
                 <viewController storyboardIdentifier="MainPrefsVC" id="BGD-tY-Myx" customClass="MainPrefsViewController" customModule="MonitorControl" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" horizontalHuggingPriority="1" translatesAutoresizingMaskIntoConstraints="NO" id="COE-Oc-gZs">
-                        <rect key="frame" x="0.0" y="0.0" width="730" height="516"/>
+                        <rect key="frame" x="0.0" y="0.0" width="730" height="616"/>
                         <subviews>
                             <gridView xPlacement="leading" yPlacement="fill" rowAlignment="none" rowSpacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="noT-gJ-0yS">
-                                <rect key="frame" x="20" y="20" width="690" height="476"/>
+                                <rect key="frame" x="20" y="20" width="690" height="576"/>
                                 <rows>
                                     <gridRow bottomPadding="-13" id="DnA-aR-kcy"/>
                                     <gridRow bottomPadding="-10" id="xlB-05-nd7"/>
@@ -34,6 +34,10 @@
                                     <gridRow bottomPadding="-10" id="ALY-LA-2OR"/>
                                     <gridRow bottomPadding="-6" id="XRs-29-fP2"/>
                                     <gridRow bottomPadding="-6" id="cw7-5z-NlQ"/>
+                                    <gridRow bottomPadding="-6" id="rHC-7c-uKd"/>
+                                    <gridRow bottomPadding="-6" id="oDb-Gx-p91"/>
+                                    <gridRow bottomPadding="-6" id="VAr-zF-eA4"/>
+                                    <gridRow bottomPadding="-6" id="D3v-3U-fH4"/>
                                     <gridRow id="1zL-Fy-6VV"/>
                                 </rows>
                                 <columns>
@@ -270,6 +274,120 @@
                                             </connections>
                                         </button>
                                     </gridCell>
+                                    <gridCell row="rHC-7c-uKd" column="eHC-Ur-UsS" xPlacement="trailing" id="AGJ-oT-5U1">
+                                        <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QX9-BE-LY4">
+                                            <rect key="frame" x="134" y="4" width="78" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Remote API:" id="UyQ-cS-Nm4">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
+                                    <gridCell row="rHC-7c-uKd" column="64O-72-10l" id="M1z-vR-1kh">
+                                        <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Z3h-rP-nv8">
+                                            <rect key="frame" x="218" y="3" width="472" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Enable remote HTTP control" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3bl-6I-T9Q">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="remoteControlEnabledChanged:" target="BGD-tY-Myx" id="O4Q-Gp-f17"/>
+                                            </connections>
+                                        </button>
+                                    </gridCell>
+                                    <gridCell row="oDb-Gx-p91" column="eHC-Ur-UsS" xPlacement="trailing" id="g75-FL-UlO">
+                                        <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="doB-mu-djn">
+                                            <rect key="frame" x="173" y="-17" width="39" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Port:" id="dkW-KY-kzd">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
+                                    <gridCell row="oDb-Gx-p91" column="64O-72-10l" id="MLq-2y-Qt8">
+                                        <textField key="contentView" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="F1w-gd-KxI">
+                                            <rect key="frame" x="218" y="-20" width="100" height="22"/>
+                                            <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" bezelStyle="round" id="9EU-cM-D4v">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                <connections>
+                                                    <action selector="remoteControlPortChanged:" target="BGD-tY-Myx" id="hmu-rx-CkG"/>
+                                                </connections>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
+                                    <gridCell row="VAr-zF-eA4" column="eHC-Ur-UsS" xPlacement="trailing" id="Fgd-oE-Y8v">
+                                        <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2ox-gr-Gnt">
+                                            <rect key="frame" x="123" y="-38" width="89" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Bearer token:" id="W7Q-Rp-DdI">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
+                                    <gridCell row="VAr-zF-eA4" column="64O-72-10l" id="ydh-1u-vAU">
+                                        <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="R7A-gm-lmA">
+                                            <rect key="frame" x="218" y="-42" width="264" height="24"/>
+                                            <subviews>
+                                                <secureTextField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="b5f-Sn-kYQ">
+                                                    <rect key="frame" x="0.0" y="1" width="200" height="22"/>
+                                                    <secureTextFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" bezelStyle="round" id="VY8-7M-Y4X">
+                                                        <font key="font" usesAppearanceFont="YES"/>
+                                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        <connections>
+                                                            <action selector="remoteControlTokenChanged:" target="BGD-tY-Myx" id="HVL-nU-Jat"/>
+                                                        </connections>
+                                                    </secureTextFieldCell>
+                                                </secureTextField>
+                                                <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aWQ-fa-ODp">
+                                                    <rect key="frame" x="0.0" y="1" width="200" height="22"/>
+                                                    <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" bezelStyle="round" id="q5j-J8-hWv">
+                                                        <font key="font" usesAppearanceFont="YES"/>
+                                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        <connections>
+                                                            <action selector="remoteControlTokenChanged:" target="BGD-tY-Myx" id="f5j-vd-1Xe"/>
+                                                        </connections>
+                                                    </textFieldCell>
+                                                </textField>
+                                                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tLG-20-2ZK">
+                                                    <rect key="frame" x="206" y="0.0" width="57" height="24"/>
+                                                    <buttonCell key="cell" type="push" title="Show" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="oaH-6D-kzV">
+                                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                        <font key="font" metaFont="smallSystem"/>
+                                                    </buttonCell>
+                                                    <connections>
+                                                        <action selector="toggleRemoteControlTokenVisibility:" target="BGD-tY-Myx" id="NSb-Z5-7Bf"/>
+                                                    </connections>
+                                                </button>
+                                            </subviews>
+                                        </view>
+                                    </gridCell>
+                                    <gridCell row="D3v-3U-fH4" column="eHC-Ur-UsS" xPlacement="trailing" id="XZ2-vg-rki">
+                                        <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="jlwm-aR-e0R">
+                                            <rect key="frame" x="162" y="-59" width="50" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Status:" id="UyV-5W-rsc">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
+                                    <gridCell row="D3v-3U-fH4" column="64O-72-10l" id="8U2-lF-pdG">
+                                        <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mRA-91-zWN">
+                                            <rect key="frame" x="218" y="-59" width="474" height="14"/>
+                                            <textFieldCell key="cell" controlSize="small" title="Disabled" id="hNn-t0-e53">
+                                                <font key="font" metaFont="smallSystem"/>
+                                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </gridCell>
                                     <gridCell row="1zL-Fy-6VV" column="eHC-Ur-UsS" id="ZXq-MT-yta"/>
                                     <gridCell row="1zL-Fy-6VV" column="64O-72-10l" xPlacement="leading" id="LYo-2f-Lll">
                                         <button key="contentView" verticalHuggingPriority="750" placeholderIntrinsicWidth="200" placeholderIntrinsicHeight="20" translatesAutoresizingMaskIntoConstraints="NO" id="s9H-FF-JCT">
@@ -300,6 +418,12 @@
                         <outlet property="combinedBrightness" destination="HqE-17-9wg" id="jyF-r9-cDY"/>
                         <outlet property="enableBrightnessSync" destination="DW6-ez-A8y" id="2ay-8g-h1v"/>
                         <outlet property="enableSmooth" destination="7cl-Ma-fc4" id="jJE-mj-5v2"/>
+                        <outlet property="remoteControlEnabled" destination="Z3h-rP-nv8" id="lZ1-pk-0lH"/>
+                        <outlet property="remoteControlPort" destination="F1w-gd-KxI" id="ly6-g2-7cg"/>
+                        <outlet property="remoteControlStatus" destination="mRA-91-zWN" id="Lgl-38-LME"/>
+                        <outlet property="remoteControlToken" destination="b5f-Sn-kYQ" id="yIQ-oN-hMZ"/>
+                        <outlet property="remoteControlTokenPlain" destination="aWQ-fa-ODp" id="62F-05-iJY"/>
+                        <outlet property="remoteControlTokenRevealButton" destination="tLG-20-2ZK" id="mf0-lM-pou"/>
                         <outlet property="rowDoNothingStartupText" destination="0ue-QI-RgH" id="kR9-4i-WDN"/>
                         <outlet property="rowReadStartupText" destination="UAP-kZ-c0z" id="0KO-oS-mhB"/>
                         <outlet property="rowWriteStartupText" destination="zBq-qo-TWc" id="nwU-SI-gMB"/>

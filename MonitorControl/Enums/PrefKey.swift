@@ -87,6 +87,12 @@ enum PrefKey: String {
   // Sliders for multiple displays
   case multiSliders
 
+  // Enable remote HTTP control API
+  case remoteControlEnabled
+
+  // Listening port for remote HTTP control API
+  case remoteControlPort
+
   /* -- Display specific settings */
 
   // Enable mute DDC for display
@@ -124,6 +130,12 @@ enum PrefKey: String {
 
   // Friendly name
   case friendlyName
+
+  // Simulated power state used by remote API
+  case remoteControlSimulatedPowerOff
+
+  // Last non-zero brightness for simulated power wake
+  case remoteControlSimulatedPowerRestoreBrightness
 
   /* -- Display+Command specific settings -- */
 
