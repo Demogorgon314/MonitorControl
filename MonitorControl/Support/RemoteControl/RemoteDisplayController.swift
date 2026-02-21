@@ -3,7 +3,19 @@
 import Foundation
 
 final class RemoteDisplayController: RemoteDisplayService {
+  private struct InputProbeCacheEntry {
+    let code: UInt16?
+    let expiresAt: Date
+  }
+
+  private enum InputProbeCacheResult {
+    case miss
+    case hit(UInt16?)
+  }
+
   static let shared = RemoteDisplayController()
+  private let inputProbeCacheTTL: TimeInterval = 3
+  private var inputProbeCache: [UInt32: InputProbeCacheEntry] = [:]
 
   private init() {}
 
@@ -164,6 +176,7 @@ final class RemoteDisplayController: RemoteDisplayService {
       }
 
       otherDisplay.savePref(Int(targetCode), for: .inputSelect)
+      self.clearInputProbeCache(displayId: display.identifier)
       return self.buildStatus(for: otherDisplay, refreshInputFromDDC: false)
     }
   }
@@ -270,23 +283,40 @@ final class RemoteDisplayController: RemoteDisplayService {
 
   private func readCurrentInputCode(display: OtherDisplay, refreshFromDDC: Bool) -> UInt16? {
     if refreshFromDDC {
+      let now = Date()
+      switch self.readInputProbeCache(displayId: display.identifier, now: now) {
+      case let .hit(code):
+        return code
+      case .miss:
+        break
+      }
+
       if Arm64DDC.isArm64, display.arm64ddc {
         if let inputValue = self.probeArm64InputCode(display: display) {
           display.savePref(Int(inputValue), for: .inputSelect)
+          self.storeInputProbeCache(displayId: display.identifier, code: inputValue, now: now)
           return inputValue
         }
       } else if let inputValue = display.readDDCValues(for: .inputSelect, tries: 1, minReplyDelay: nil)?.current,
-                (0 ... 255).contains(inputValue) {
+                (1 ... 255).contains(inputValue) {
         display.savePref(Int(inputValue), for: .inputSelect)
+        self.storeInputProbeCache(displayId: display.identifier, code: inputValue, now: now)
         return inputValue
       }
     }
 
     if display.prefExists(for: .inputSelect) {
       let value = display.readPrefAsInt(for: .inputSelect)
-      if (0 ... 255).contains(value) {
+      if (1 ... 255).contains(value) {
+        if refreshFromDDC {
+          self.storeInputProbeCache(displayId: display.identifier, code: UInt16(value), now: Date())
+        }
         return UInt16(value)
       }
+    }
+
+    if refreshFromDDC {
+      self.storeInputProbeCache(displayId: display.identifier, code: nil, now: Date())
     }
 
     return nil
@@ -336,8 +366,7 @@ final class RemoteDisplayController: RemoteDisplayService {
         let writeSucceeded: Bool
         if Arm64DDC.isArm64 {
           if display.arm64ddc {
-            writeSucceeded = Arm64DDC.write(service: display.arm64avService, command: controlCode, value: code) ||
-              Arm64DDC.write(service: display.arm64avService, command: controlCode, value: code, dataAddress: ARM64_DDC_ALTERNATE_DATA_ADDRESS)
+            writeSucceeded = Arm64DDC.write(service: display.arm64avService, command: controlCode, value: code)
           } else {
             writeSucceeded = false
           }
@@ -351,30 +380,42 @@ final class RemoteDisplayController: RemoteDisplayService {
   }
 
   private func probeArm64InputCode(display: OtherDisplay) -> UInt16? {
-    if let value = Arm64DDC.read(
-      service: display.arm64avService,
-      command: Command.inputSelect.rawValue,
-      numOfWriteCycles: 1,
-      numOfRetryAttemps: 0,
-      validateChecksum: false
-    )?.current,
-      (0 ... 255).contains(value) {
-      return value
+    var value: UInt16?
+    DisplayManager.shared.globalDDCQueue.sync {
+      value = Arm64DDC.read(
+        service: display.arm64avService,
+        command: Command.inputSelect.rawValue,
+        writeSleepTime: 10000,
+        numOfWriteCycles: 2,
+        readSleepTime: 10000,
+        numOfRetryAttemps: 0,
+        validateChecksum: false
+      )?.current
     }
-
-    if let value = Arm64DDC.read(
-      service: display.arm64avService,
-      command: Command.inputSelect.rawValue,
-      numOfWriteCycles: 1,
-      numOfRetryAttemps: 0,
-      dataAddress: ARM64_DDC_ALTERNATE_DATA_ADDRESS,
-      validateChecksum: false
-    )?.current,
-      (0 ... 255).contains(value) {
+    if let value, (1 ... 255).contains(value) {
       return value
     }
 
     return nil
+  }
+
+  private func readInputProbeCache(displayId: UInt32, now: Date) -> InputProbeCacheResult {
+    guard let entry = self.inputProbeCache[displayId] else {
+      return .miss
+    }
+    if entry.expiresAt <= now {
+      self.inputProbeCache.removeValue(forKey: displayId)
+      return .miss
+    }
+    return .hit(entry.code)
+  }
+
+  private func storeInputProbeCache(displayId: UInt32, code: UInt16?, now: Date) {
+    self.inputProbeCache[displayId] = InputProbeCacheEntry(code: code, expiresAt: now.addingTimeInterval(self.inputProbeCacheTTL))
+  }
+
+  private func clearInputProbeCache(displayId: UInt32) {
+    self.inputProbeCache.removeValue(forKey: displayId)
   }
 
   private func performOnMain<T>(_ block: @escaping () throws -> T) throws -> T {
