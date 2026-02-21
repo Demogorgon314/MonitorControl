@@ -24,9 +24,16 @@ class MainPrefsViewController: NSViewController, SettingsPane {
   @IBOutlet var enableSmooth: NSButton!
   @IBOutlet var enableBrightnessSync: NSButton!
   @IBOutlet var startupAction: NSPopUpButton!
+  @IBOutlet var remoteControlEnabled: NSButton!
+  @IBOutlet var remoteControlPort: NSTextField!
+  @IBOutlet var remoteControlToken: NSSecureTextField!
+  @IBOutlet var remoteControlTokenPlain: NSTextField?
+  @IBOutlet var remoteControlTokenRevealButton: NSButton?
+  @IBOutlet var remoteControlStatus: NSTextField!
   @IBOutlet var rowDoNothingStartupText: NSGridRow!
   @IBOutlet var rowWriteStartupText: NSGridRow!
   @IBOutlet var rowReadStartupText: NSGridRow!
+  private var isRemoteControlTokenVisible = false
 
   func updateGridLayout() {
     if self.startupAction.selectedTag() == StartupAction.doNothing.rawValue {
@@ -61,12 +68,23 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     self.enableSmooth.state = prefs.bool(forKey: PrefKey.disableSmoothBrightness.rawValue) ? .off : .on
     self.enableBrightnessSync.state = prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) ? .on : .off
     self.startupAction.selectItem(withTag: prefs.integer(forKey: PrefKey.startupAction.rawValue))
+    self.remoteControlEnabled.state = prefs.bool(forKey: PrefKey.remoteControlEnabled.rawValue) ? .on : .off
+    let port = prefs.integer(forKey: PrefKey.remoteControlPort.rawValue)
+    if (1024 ... 65535).contains(port) {
+      self.remoteControlPort.stringValue = String(port)
+    } else {
+      prefs.set(51423, forKey: PrefKey.remoteControlPort.rawValue)
+      self.remoteControlPort.stringValue = "51423"
+    }
+    self.syncRemoteControlTokenFields(RemoteControlTokenStore.shared.loadToken())
+    self.setRemoteControlTokenVisibility(false)
     // Preload Display settings to some extent to properly set up size in orther that animation won't fail
     menuslidersPrefsVc?.view.layoutSubtreeIfNeeded()
     keyboardPrefsVc?.view.layoutSubtreeIfNeeded()
     displaysPrefsVc?.view.layoutSubtreeIfNeeded()
     aboutPrefsVc?.view.layoutSubtreeIfNeeded()
     self.updateGridLayout()
+    self.refreshRemoteControlStatus()
   }
 
   @IBAction func startAtLoginClicked(_ sender: NSButton) {
@@ -143,6 +161,85 @@ class MainPrefsViewController: NSViewController, SettingsPane {
   @IBAction func startupAction(_ sender: NSPopUpButton) {
     prefs.set(sender.selectedTag(), forKey: PrefKey.startupAction.rawValue)
     self.updateGridLayout()
+  }
+
+  @IBAction func remoteControlEnabledChanged(_ sender: NSButton) {
+    prefs.set(sender.state == .on, forKey: PrefKey.remoteControlEnabled.rawValue)
+    app.refreshRemoteControlServerConfiguration(showAlert: true)
+    self.refreshRemoteControlStatus()
+  }
+
+  @IBAction func remoteControlPortChanged(_ sender: NSTextField) {
+    let trimmedPort = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let parsedPort = Int(trimmedPort), (1024 ... 65535).contains(parsedPort) else {
+      let savedPort = prefs.integer(forKey: PrefKey.remoteControlPort.rawValue)
+      sender.stringValue = String((1024 ... 65535).contains(savedPort) ? savedPort : 51423)
+      self.presentValidationAlert(message: "Port must be an integer between 1024 and 65535.")
+      return
+    }
+    prefs.set(parsedPort, forKey: PrefKey.remoteControlPort.rawValue)
+    app.refreshRemoteControlServerConfiguration(showAlert: true)
+    self.refreshRemoteControlStatus()
+  }
+
+  @IBAction func remoteControlTokenChanged(_: NSTextField) {
+    let token = self.currentRemoteControlTokenText().trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !token.isEmpty else {
+      self.syncRemoteControlTokenFields(RemoteControlTokenStore.shared.loadToken())
+      self.presentValidationAlert(message: "Bearer token cannot be empty.")
+      return
+    }
+    do {
+      try RemoteControlTokenStore.shared.saveToken(token)
+      self.syncRemoteControlTokenFields(token)
+      app.refreshRemoteControlServerConfiguration(showAlert: true)
+      self.refreshRemoteControlStatus()
+    } catch {
+      self.syncRemoteControlTokenFields(RemoteControlTokenStore.shared.loadToken())
+      self.presentValidationAlert(message: "Unable to save token in Keychain.")
+    }
+  }
+
+  @IBAction func toggleRemoteControlTokenVisibility(_: NSButton) {
+    if self.isRemoteControlTokenVisible {
+      self.remoteControlToken.stringValue = self.remoteControlTokenPlain?.stringValue ?? self.remoteControlToken.stringValue
+    } else {
+      self.remoteControlTokenPlain?.stringValue = self.remoteControlToken.stringValue
+    }
+    self.setRemoteControlTokenVisibility(!self.isRemoteControlTokenVisible)
+  }
+
+  func refreshRemoteControlStatus() {
+    guard self.isViewLoaded else {
+      return
+    }
+    self.remoteControlStatus.stringValue = app.remoteControlStatusDescription()
+  }
+
+  private func presentValidationAlert(message: String) {
+    let alert = NSAlert()
+    alert.messageText = NSLocalizedString("Remote HTTP Control", comment: "Shown in the alert dialog")
+    alert.informativeText = message
+    alert.runModal()
+  }
+
+  private func setRemoteControlTokenVisibility(_ visible: Bool) {
+    self.isRemoteControlTokenVisible = visible
+    self.remoteControlToken.isHidden = visible
+    self.remoteControlTokenPlain?.isHidden = !visible
+    self.remoteControlTokenRevealButton?.title = visible ? "Hide" : "Show"
+  }
+
+  private func syncRemoteControlTokenFields(_ token: String) {
+    self.remoteControlToken.stringValue = token
+    self.remoteControlTokenPlain?.stringValue = token
+  }
+
+  private func currentRemoteControlTokenText() -> String {
+    if self.isRemoteControlTokenVisible, let plainToken = self.remoteControlTokenPlain?.stringValue {
+      return plainToken
+    }
+    return self.remoteControlToken.stringValue
   }
 
   @available(macOS, deprecated: 10.10)

@@ -38,6 +38,17 @@
 		AA78BDBD2709FE7B00CA8DF7 /* UpdaterDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA78BDBC2709FE7B00CA8DF7 /* UpdaterDelegate.swift */; };
 		AA99521726FE25AB00612E07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA99521626FE25AB00612E07 /* AppDelegate.swift */; };
 		AA99521926FE49A300612E07 /* MenuHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA99521826FE49A300612E07 /* MenuHandler.swift */; };
+		C0A100112EAA000100000001 /* RemoteAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100012EAA000100000001 /* RemoteAPIModels.swift */; };
+		C0A100122EAA000100000001 /* RemoteAPIRequestParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100022EAA000100000001 /* RemoteAPIRequestParser.swift */; };
+		C0A100132EAA000100000001 /* RemoteAPIRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100032EAA000100000001 /* RemoteAPIRouter.swift */; };
+		C0A100142EAA000100000001 /* RemoteDisplayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100042EAA000100000001 /* RemoteDisplayController.swift */; };
+		C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100052EAA000100000001 /* RemoteControlServer.swift */; };
+		C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */; };
+		C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */; };
+		C0A100212EAA000100000001 /* RemoteInputSourceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */; };
+		C0A100192EAA000100000001 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001A2EAA000100000001 /* NIOCore */; };
+		C0A1001B2EAA000100000001 /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001C2EAA000100000001 /* NIOHTTP1 */; };
+		C0A1001D2EAA000100000001 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001E2EAA000100000001 /* NIOPosix */; };
 		AA9AE86F26B5BF3D00B6CA65 /* OSD.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA9AE86E26B5BF3D00B6CA65 /* OSD.framework */; };
 		AA9AE87126B5BFB700B6CA65 /* CoreDisplay.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA9AE87026B5BFB700B6CA65 /* CoreDisplay.framework */; };
 		AAB2F638273ED099004AB5A4 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = AAB2F637273ED099004AB5A4 /* .swiftlint.yml */; };
@@ -125,6 +136,14 @@
 		AA90102027C56A0E00CC1DF7 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AA99521626FE25AB00612E07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AA99521826FE49A300612E07 /* MenuHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuHandler.swift; sourceTree = "<group>"; };
+		C0A100012EAA000100000001 /* RemoteAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteAPIModels.swift; sourceTree = "<group>"; };
+		C0A100022EAA000100000001 /* RemoteAPIRequestParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteAPIRequestParser.swift; sourceTree = "<group>"; };
+		C0A100032EAA000100000001 /* RemoteAPIRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteAPIRouter.swift; sourceTree = "<group>"; };
+		C0A100042EAA000100000001 /* RemoteDisplayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteDisplayController.swift; sourceTree = "<group>"; };
+		C0A100052EAA000100000001 /* RemoteControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlServer.swift; sourceTree = "<group>"; };
+		C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlTokenStore.swift; sourceTree = "<group>"; };
+		C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNIORequestHandler.swift; sourceTree = "<group>"; };
+		C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputSourceCatalog.swift; sourceTree = "<group>"; };
 		AA99E81527622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Main.strings"; sourceTree = "<group>"; };
 		AA99E81627622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InternetAccessPolicy.strings"; sourceTree = "<group>"; };
 		AA99E81727622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -189,6 +208,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA9AE87126B5BFB700B6CA65 /* CoreDisplay.framework in Frameworks */,
+				C0A1001D2EAA000100000001 /* NIOPosix in Frameworks */,
+				C0A1001B2EAA000100000001 /* NIOHTTP1 in Frameworks */,
+				C0A100192EAA000100000001 /* NIOCore in Frameworks */,
 				AA70817C27046B9800CC5625 /* Sparkle in Frameworks */,
 				AA44E703270377C200E06865 /* KeyboardShortcuts in Frameworks */,
 				6CD35F53264FFFC6001F1344 /* SimplyCoreAudio in Frameworks */,
@@ -317,8 +339,24 @@
 				AA16139A26BE772E00DCF027 /* Arm64DDC.swift */,
 				AA4398A826DD55DA00943F16 /* IntelDDC.swift */,
 				FE4E0895249D584C003A50BB /* OSDUtils.swift */,
+				C0A100072EAA000100000001 /* RemoteControl */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		C0A100072EAA000100000001 /* RemoteControl */ = {
+			isa = PBXGroup;
+			children = (
+				C0A100012EAA000100000001 /* RemoteAPIModels.swift */,
+				C0A100022EAA000100000001 /* RemoteAPIRequestParser.swift */,
+				C0A100032EAA000100000001 /* RemoteAPIRouter.swift */,
+				C0A100042EAA000100000001 /* RemoteDisplayController.swift */,
+				C0A100052EAA000100000001 /* RemoteControlServer.swift */,
+				C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */,
+				C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */,
+				C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */,
+			);
+			path = RemoteControl;
 			sourceTree = "<group>";
 		};
 		F01B0687228221B6008E64DB /* UI */ = {
@@ -394,6 +432,9 @@
 			packageProductDependencies = (
 				6CD35F52264FFFC6001F1344 /* SimplyCoreAudio */,
 				6CD35F5526500008001F1344 /* MediaKeyTap */,
+				C0A1001A2EAA000100000001 /* NIOCore */,
+				C0A1001C2EAA000100000001 /* NIOHTTP1 */,
+				C0A1001E2EAA000100000001 /* NIOPosix */,
 				AA44E702270377C200E06865 /* KeyboardShortcuts */,
 				AA70817B27046B9800CC5625 /* Sparkle */,
 				AAD7DD332CAFF3D90062822F /* Settings */,
@@ -477,6 +518,7 @@
 				6CD35F5A2650003F001F1344 /* XCRemoteSwiftPackageReference "Settings" */,
 				AA44E701270377C200E06865 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				AA70817A27046B9800CC5625 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */,
 			);
 			productRefGroup = 56754EAC1D9A4016007BCDC5 /* Products */;
 			projectDirPath = "";
@@ -641,6 +683,14 @@
 				AA99521726FE25AB00612E07 /* AppDelegate.swift in Sources */,
 				AA25F6D126E681D30087F3A2 /* KeyboardPrefsViewController.swift in Sources */,
 				F01B069F228221B7008E64DB /* SliderHandler.swift in Sources */,
+				C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */,
+				C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */,
+				C0A100212EAA000100000001 /* RemoteInputSourceCatalog.swift in Sources */,
+				C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */,
+				C0A100122EAA000100000001 /* RemoteAPIRequestParser.swift in Sources */,
+				C0A100132EAA000100000001 /* RemoteAPIRouter.swift in Sources */,
+				C0A100112EAA000100000001 /* RemoteAPIModels.swift in Sources */,
+				C0A100142EAA000100000001 /* RemoteDisplayController.swift in Sources */,
 				AACE5E2327050C63006C2A48 /* NSNotification+Extension.swift in Sources */,
 				AA25F6CF26E680510087F3A2 /* MenuslidersPrefsViewController.swift in Sources */,
 				AA4398A926DD55DA00943F16 /* IntelDDC.swift in Sources */,
@@ -869,7 +919,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 7100;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
+				DEVELOPMENT_TEAM = GX4T5HF5N9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/**",
@@ -906,7 +956,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 7100;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
+				DEVELOPMENT_TEAM = GX4T5HF5N9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/**",
@@ -946,7 +996,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 7100;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
+				DEVELOPMENT_TEAM = GX4T5HF5N9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = MonitorControlHelper/Info.plist;
@@ -977,7 +1027,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 7100;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
+				DEVELOPMENT_TEAM = GX4T5HF5N9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = MonitorControlHelper/Info.plist;
@@ -1067,6 +1117,14 @@
 				kind = branch;
 			};
 		};
+		C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.40.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1094,6 +1152,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6CD35F5A2650003F001F1344 /* XCRemoteSwiftPackageReference "Settings" */;
 			productName = Settings;
+		};
+		C0A1001A2EAA000100000001 /* NIOCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOCore;
+		};
+		C0A1001C2EAA000100000001 /* NIOHTTP1 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOHTTP1;
+		};
+		C0A1001E2EAA000100000001 /* NIOPosix */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A1001F2EAA000100000001 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOPosix;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -5,6 +5,7 @@ import IOKit
 
 let ARM64_DDC_7BIT_ADDRESS: UInt8 = 0x37 // This works with DisplayPort devices
 let ARM64_DDC_DATA_ADDRESS: UInt8 = 0x51
+let ARM64_DDC_ALTERNATE_DATA_ADDRESS: UInt8 = 0x50
 
 class Arm64DDC: NSObject {
   #if arch(arm64)
@@ -69,11 +70,32 @@ class Arm64DDC: NSObject {
     return matchedDisplayServices
   }
 
-  static func read(service: IOAVService?, command: UInt8, writeSleepTime: UInt32? = nil, numOfWriteCycles: UInt8? = nil, readSleepTime: UInt32? = nil, numOfRetryAttemps: UInt8? = nil, retrySleepTime: UInt32? = nil) -> (current: UInt16, max: UInt16)? {
+  static func read(
+    service: IOAVService?,
+    command: UInt8,
+    writeSleepTime: UInt32? = nil,
+    numOfWriteCycles: UInt8? = nil,
+    readSleepTime: UInt32? = nil,
+    numOfRetryAttemps: UInt8? = nil,
+    retrySleepTime: UInt32? = nil,
+    dataAddress: UInt8? = nil,
+    validateChecksum: Bool = true
+  ) -> (current: UInt16, max: UInt16)? {
     var values: (UInt16, UInt16)?
     var send: [UInt8] = [command]
     var reply = [UInt8](repeating: 0, count: 11)
-    if Self.performDDCCommunication(service: service, send: &send, reply: &reply, writeSleepTime: writeSleepTime, numOfWriteCycles: numOfWriteCycles, readSleepTime: readSleepTime, numOfRetryAttemps: numOfRetryAttemps, retrySleepTime: retrySleepTime) {
+    if Self.performDDCCommunication(
+      service: service,
+      send: &send,
+      reply: &reply,
+      writeSleepTime: writeSleepTime,
+      numOfWriteCycles: numOfWriteCycles,
+      readSleepTime: readSleepTime,
+      numOfRetryAttemps: numOfRetryAttemps,
+      retrySleepTime: retrySleepTime,
+      dataAddress: dataAddress,
+      validateChecksum: validateChecksum
+    ) {
       let max = UInt16(reply[6]) * 256 + UInt16(reply[7])
       let current = UInt16(reply[8]) * 256 + UInt16(reply[9])
       values = (current, max)
@@ -83,29 +105,67 @@ class Arm64DDC: NSObject {
     return values
   }
 
-  static func write(service: IOAVService?, command: UInt8, value: UInt16, writeSleepTime: UInt32? = nil, numOfWriteCycles: UInt8? = nil, numOfRetryAttemps: UInt8? = nil, retrySleepTime: UInt32? = nil) -> Bool {
+  static func write(
+    service: IOAVService?,
+    command: UInt8,
+    value: UInt16,
+    writeSleepTime: UInt32? = nil,
+    numOfWriteCycles: UInt8? = nil,
+    numOfRetryAttemps: UInt8? = nil,
+    retrySleepTime: UInt32? = nil,
+    dataAddress: UInt8? = nil
+  ) -> Bool {
     var send: [UInt8] = [command, UInt8(value >> 8), UInt8(value & 255)]
     var reply: [UInt8] = []
-    return Self.performDDCCommunication(service: service, send: &send, reply: &reply, writeSleepTime: writeSleepTime, numOfWriteCycles: numOfWriteCycles, numOfRetryAttemps: numOfRetryAttemps, retrySleepTime: retrySleepTime)
+    return Self.performDDCCommunication(
+      service: service,
+      send: &send,
+      reply: &reply,
+      writeSleepTime: writeSleepTime,
+      numOfWriteCycles: numOfWriteCycles,
+      numOfRetryAttemps: numOfRetryAttemps,
+      retrySleepTime: retrySleepTime,
+      dataAddress: dataAddress
+    )
   }
 
-  static func performDDCCommunication(service: IOAVService?, send: inout [UInt8], reply: inout [UInt8], writeSleepTime: UInt32? = nil, numOfWriteCycles: UInt8? = nil, readSleepTime: UInt32? = nil, numOfRetryAttemps: UInt8? = nil, retrySleepTime: UInt32? = nil) -> Bool {
-    let dataAddress = ARM64_DDC_DATA_ADDRESS
+  static func performDDCCommunication(
+    service: IOAVService?,
+    send: inout [UInt8],
+    reply: inout [UInt8],
+    writeSleepTime: UInt32? = nil,
+    numOfWriteCycles: UInt8? = nil,
+    readSleepTime: UInt32? = nil,
+    numOfRetryAttemps: UInt8? = nil,
+    retrySleepTime: UInt32? = nil,
+    dataAddress: UInt8? = nil,
+    validateChecksum: Bool = true
+  ) -> Bool {
+    let selectedDataAddress = dataAddress ?? ARM64_DDC_DATA_ADDRESS
     var success = false
     guard service != nil else {
       return success
     }
     var packet: [UInt8] = [UInt8(0x80 | (send.count + 1)), UInt8(send.count)] + send + [0] // Note: the last byte is the place of the checksum, see next line!
-    packet[packet.count - 1] = self.checksum(chk: send.count == 1 ? ARM64_DDC_7BIT_ADDRESS << 1 : ARM64_DDC_7BIT_ADDRESS << 1 ^ dataAddress, data: &packet, start: 0, end: packet.count - 2)
+    packet[packet.count - 1] = self.checksum(
+      chk: send.count == 1 ? ARM64_DDC_7BIT_ADDRESS << 1 : ARM64_DDC_7BIT_ADDRESS << 1 ^ selectedDataAddress,
+      data: &packet,
+      start: 0,
+      end: packet.count - 2
+    )
     for _ in 1 ... (numOfRetryAttemps ?? 4) + 1 {
       for _ in 1 ... max((numOfWriteCycles ?? 2) + 0, 1) {
         usleep(writeSleepTime ?? 10000)
-        success = IOAVServiceWriteI2C(service, UInt32(ARM64_DDC_7BIT_ADDRESS), UInt32(dataAddress), &packet, UInt32(packet.count)) == 0
+        success = IOAVServiceWriteI2C(service, UInt32(ARM64_DDC_7BIT_ADDRESS), UInt32(selectedDataAddress), &packet, UInt32(packet.count)) == 0
       }
       if !reply.isEmpty {
         usleep(readSleepTime ?? 50000)
         if IOAVServiceReadI2C(service, UInt32(ARM64_DDC_7BIT_ADDRESS), 0, &reply, UInt32(reply.count)) == 0 {
-          success = self.checksum(chk: 0x50, data: &reply, start: 0, end: reply.count - 2) == reply[reply.count - 1]
+          if validateChecksum {
+            success = self.checksum(chk: 0x50, data: &reply, start: 0, end: reply.count - 2) == reply[reply.count - 1]
+          } else {
+            success = true
+          }
         }
       }
       if success {

@@ -98,6 +98,70 @@ Notable exceptions for hardware control compatibility:
 - Some displays (notably EIZO) use MCCS over USB or an entirely custom protocol for control. These displays are supported with software dimming only.
 - DisplayLink docks and dongles do not allow for DDC control on Macs, only software dimming is available for these connections.
 
+## Remote HTTP API (LAN)
+
+MonitorControl can expose a local network HTTP API for remote control (for example from an Android app).
+
+- Disabled by default.
+- Configure in `Settings > General`:
+  - `Enable remote HTTP control`
+  - `Port` (`1024-65535`, default `51423`)
+  - `Bearer token` (stored in macOS Keychain)
+- All endpoints require `Authorization: Bearer <token>`.
+- API base path: `/api/v1`.
+- `power` endpoints use software simulation (brightness 0 / restore previous brightness), not hardware DDC power mode.
+- Input source data is returned as best-effort (`current` + standard switchable input list), because physical cable detection is display-dependent.
+
+Endpoints:
+
+- `GET /api/v1/health`
+- `GET /api/v1/displays`
+- `GET /api/v1/displays/{id}/inputs`
+- `POST /api/v1/displays/{id}/brightness` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/brightness` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/{id}/volume` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/volume` with `{ "value": 0..100 }`
+- `POST /api/v1/displays/{id}/power` with `{ "state": "on" | "off" }`
+- `POST /api/v1/displays/power` with `{ "state": "on" | "off" }`
+- `POST /api/v1/displays/{id}/input` with `{ "name": "HDMI-1|HDMI-2|DP-1|DP-2|DVI-1|DVI-2|VGA-1|VGA-2" }` or `{ "code": 0..255 }`
+
+Examples:
+
+```sh
+TOKEN="your-token"
+HOST="192.168.1.10:51423"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://$HOST/api/v1/displays"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://$HOST/api/v1/displays/69733184/inputs"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"value":60}' \
+  "http://$HOST/api/v1/displays/69733184/brightness"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"value":35}' \
+  "http://$HOST/api/v1/displays/69733184/volume"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"state":"off"}' \
+  "http://$HOST/api/v1/displays/power"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"HDMI-1"}' \
+  "http://$HOST/api/v1/displays/69733184/input"
+```
+
 ## Contributing to the project
 
 - If you want, you can fork the code, make improvements and submit a pull request to improve the app. Accepting a PR is solely in the hands of the maintainer - before making fundamental changes expecting it to be accepted, please consult the maintainer of the project!

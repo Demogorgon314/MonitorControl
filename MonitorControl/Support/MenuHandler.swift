@@ -4,6 +4,11 @@ import AppKit
 import os.log
 
 class MenuHandler: NSMenu, NSMenuDelegate {
+  private struct InputMenuSelectionContext {
+    let displayID: CGDirectDisplayID
+    let inputCode: UInt16
+  }
+
   var combinedSliderHandler: [Command: SliderHandler] = [:]
 
   var lastMenuRelevantDisplayId: CGDirectDisplayID = 0
@@ -194,11 +199,119 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       let title = NSLocalizedString("Brightness", comment: "Shown in menu")
       addedSliderHandlers.append(self.setupMenuSliderHandler(command: .brightness, display: display, title: title))
     }
+    self.appendInputMenu(display: display, monitorSubMenu: monitorSubMenu, asSubMenu: asSubMenu, numOfDisplays: numOfDisplays)
     if prefs.integer(forKey: PrefKey.multiSliders.rawValue) != MultiSliders.combine.rawValue {
       self.addDisplayMenuBlock(addedSliderHandlers: addedSliderHandlers, blockName: display.readPrefAsString(key: .friendlyName) != "" ? display.readPrefAsString(key: .friendlyName) : display.name, monitorSubMenu: monitorSubMenu, numOfDisplays: numOfDisplays, asSubMenu: asSubMenu)
     }
     if addedSliderHandlers.count > 0, prefs.integer(forKey: PrefKey.menuIcon.rawValue) == MenuIcon.sliderOnly.rawValue {
       app.updateStatusItemVisibility(true)
+    }
+  }
+
+  private func canControlInput(display: Display) -> Bool {
+    guard let otherDisplay = display as? OtherDisplay else {
+      return false
+    }
+    return !display.isDummy && !otherDisplay.isSw() && !display.readPrefAsBool(key: .unavailableDDC, for: .inputSelect)
+  }
+
+  private func resolveCurrentInputCodeFromPrefs(display: Display) -> UInt16? {
+    guard display.prefExists(for: .inputSelect) else {
+      return nil
+    }
+    let savedCode = display.readPrefAsInt(for: .inputSelect)
+    guard (1 ... 255).contains(savedCode) else {
+      return nil
+    }
+    return UInt16(savedCode)
+  }
+
+  private func buildInputSources(currentCode: UInt16?) -> [RemoteInputSource] {
+    var sources = RemoteInputSourceCatalog.defaultSources
+    if let currentCode {
+      let currentSource = RemoteInputSourceCatalog.source(for: currentCode)
+      if !sources.contains(where: { $0.code == currentSource.code }) {
+        sources.insert(currentSource, at: 0)
+      }
+    }
+    return sources
+  }
+
+  private func displayLabel(for display: Display) -> String {
+    let friendlyName = display.readPrefAsString(key: .friendlyName).trimmingCharacters(in: .whitespacesAndNewlines)
+    return friendlyName.isEmpty ? display.name : friendlyName
+  }
+
+  private func appendInputMenu(display: Display, monitorSubMenu: NSMenu, asSubMenu: Bool, numOfDisplays: Int) {
+    guard self.canControlInput(display: display) else {
+      return
+    }
+
+    let currentCode = self.resolveCurrentInputCodeFromPrefs(display: display)
+    let inputSources = self.buildInputSources(currentCode: currentCode)
+    if inputSources.isEmpty {
+      return
+    }
+
+    let inputMenu = NSMenu()
+    for source in inputSources {
+      guard let inputCode = UInt16(exactly: source.code), (1 ... 255).contains(Int(inputCode)) else {
+        continue
+      }
+      let item = NSMenuItem(title: source.name, action: #selector(self.handleInputSourceSelection(_:)), keyEquivalent: "")
+      item.target = self
+      item.representedObject = InputMenuSelectionContext(displayID: display.identifier, inputCode: inputCode)
+      item.state = currentCode == inputCode ? .on : .off
+      inputMenu.insertItem(item, at: inputMenu.items.count)
+    }
+
+    guard !inputMenu.items.isEmpty else {
+      return
+    }
+
+    let baseTitle = NSLocalizedString("Input Source", comment: "Shown in menu")
+    let title: String
+    if !asSubMenu, prefs.integer(forKey: PrefKey.multiSliders.rawValue) == MultiSliders.combine.rawValue, numOfDisplays > 1 {
+      title = "\(self.displayLabel(for: display)) - \(baseTitle)"
+    } else {
+      title = baseTitle
+    }
+
+    let inputRootItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+    inputRootItem.submenu = inputMenu
+    monitorSubMenu.insertItem(inputRootItem, at: 0)
+  }
+
+  @objc private func handleInputSourceSelection(_ sender: NSMenuItem) {
+    guard app.sleepID == 0, app.reconfigureID == 0 else {
+      return
+    }
+    guard let context = sender.representedObject as? InputMenuSelectionContext else {
+      return
+    }
+    guard
+      let display = DisplayManager.shared.getAllDisplays().first(where: { $0.identifier == context.displayID }),
+      let otherDisplay = display as? OtherDisplay,
+      self.canControlInput(display: display)
+    else {
+      return
+    }
+
+    otherDisplay.writeDDCValues(command: .inputSelect, value: context.inputCode)
+    otherDisplay.savePref(Int(context.inputCode), for: .inputSelect)
+    self.markInputSelection(in: sender.menu, selectedCode: context.inputCode)
+  }
+
+  private func markInputSelection(in menu: NSMenu?, selectedCode: UInt16) {
+    guard let menu else {
+      return
+    }
+    for item in menu.items {
+      guard let context = item.representedObject as? InputMenuSelectionContext else {
+        item.state = .off
+        continue
+      }
+      item.state = context.inputCode == selectedCode ? .on : .off
     }
   }
 

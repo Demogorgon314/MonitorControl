@@ -29,6 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   var startupActionWriteCounter: Int = 0
   var audioPlayer: AVAudioPlayer?
   let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: UpdaterDelegate(), userDriverDelegate: nil)
+  let remoteControlServer = RemoteControlServer()
+  var remoteControlConfigurationError: String?
 
   var settingsPaneStyle: Settings.Style {
     if !DEBUG_MACOS10, #available(macOS 11.0, *) {
@@ -52,6 +54,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_: Notification) {
     app = self
+    self.remoteControlServer.statusChangeHandler = { _ in
+      DispatchQueue.main.async {
+        mainPrefsVc?.refreshRemoteControlStatus()
+      }
+    }
     self.subscribeEventListeners()
     self.showSafeModeAlertIfNeeded()
     if !prefs.bool(forKey: PrefKey.appAlreadyLaunched.rawValue) {
@@ -65,6 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     CGDisplayRegisterReconfigurationCallback({ _, _, _ in app.displayReconfigured() }, nil)
     self.configure(firstrun: true)
     DisplayManager.shared.createGammaActivityEnforcer()
+    self.refreshRemoteControlServerConfiguration()
     self.updaterController.startUpdater()
   }
 
@@ -88,6 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationWillTerminate(_: Notification) {
     os_log("Goodbye!", type: .info)
+    self.remoteControlServer.stop()
     DisplayManager.shared.resetSwBrightnessForAllDisplays(noPrefSave: true)
     self.updateStatusItemVisibility(true)
   }
@@ -112,6 +121,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       // Only settings that are not false, 0 or "" by default are set here. Assumes pre-wiped database.
       prefs.set(true, forKey: PrefKey.appAlreadyLaunched.rawValue)
       prefs.set(true, forKey: PrefKey.SUEnableAutomaticChecks.rawValue)
+    }
+    if prefs.object(forKey: PrefKey.remoteControlEnabled.rawValue) == nil {
+      prefs.set(false, forKey: PrefKey.remoteControlEnabled.rawValue)
+    }
+    if prefs.object(forKey: PrefKey.remoteControlPort.rawValue) == nil {
+      prefs.set(51423, forKey: PrefKey.remoteControlPort.rawValue)
+    } else if !(1024 ... 65535).contains(prefs.integer(forKey: PrefKey.remoteControlPort.rawValue)) {
+      prefs.set(51423, forKey: PrefKey.remoteControlPort.rawValue)
     }
   }
 
@@ -153,6 +170,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     displaysPrefsVc?.loadDisplayList()
     self.job(start: true)
+    self.refreshRemoteControlServerConfiguration()
   }
 
   func updateMenusAndKeys() {
@@ -335,6 +353,73 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     } catch {
       os_log("%{public}@", type: .error, error.localizedDescription)
     }
+  }
+
+  func refreshRemoteControlServerConfiguration(showAlert: Bool = false) {
+    guard prefs.bool(forKey: PrefKey.remoteControlEnabled.rawValue) else {
+      self.remoteControlConfigurationError = nil
+      self.remoteControlServer.stop()
+      mainPrefsVc?.refreshRemoteControlStatus()
+      return
+    }
+
+    let port = prefs.integer(forKey: PrefKey.remoteControlPort.rawValue)
+    guard (1024 ... 65535).contains(port) else {
+      self.remoteControlConfigurationError = "Port must be between 1024 and 65535."
+      self.remoteControlServer.stop()
+      if showAlert {
+        self.showRemoteControlAlert(message: self.remoteControlConfigurationError ?? "")
+      }
+      mainPrefsVc?.refreshRemoteControlStatus()
+      return
+    }
+
+    let token = RemoteControlTokenStore.shared.loadToken().trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !token.isEmpty else {
+      self.remoteControlConfigurationError = "Bearer token is required before enabling remote control."
+      self.remoteControlServer.stop()
+      if showAlert {
+        self.showRemoteControlAlert(message: self.remoteControlConfigurationError ?? "")
+      }
+      mainPrefsVc?.refreshRemoteControlStatus()
+      return
+    }
+
+    do {
+      try self.remoteControlServer.start(port: UInt16(port), tokenProvider: { RemoteControlTokenStore.shared.loadToken() })
+      self.remoteControlConfigurationError = nil
+    } catch {
+      self.remoteControlConfigurationError = error.localizedDescription
+      self.remoteControlServer.stop()
+      if showAlert {
+        self.showRemoteControlAlert(message: self.remoteControlConfigurationError ?? "")
+      }
+    }
+    mainPrefsVc?.refreshRemoteControlStatus()
+  }
+
+  func remoteControlStatusDescription() -> String {
+    if !prefs.bool(forKey: PrefKey.remoteControlEnabled.rawValue) {
+      return "Disabled"
+    }
+    if let configurationError = self.remoteControlConfigurationError {
+      return "Error: \(configurationError)"
+    }
+    switch self.remoteControlServer.status {
+    case let .running(port):
+      return "Running on 0.0.0.0:\(port)"
+    case let .failed(message):
+      return "Error: \(message)"
+    case .stopped:
+      return "Starting..."
+    }
+  }
+
+  private func showRemoteControlAlert(message: String) {
+    let alert = NSAlert()
+    alert.messageText = NSLocalizedString("Remote HTTP Control Error", comment: "Shown in the alert dialog")
+    alert.informativeText = message
+    alert.runModal()
   }
 
   private func setMenu() {
