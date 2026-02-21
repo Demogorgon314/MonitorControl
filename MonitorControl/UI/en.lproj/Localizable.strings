@@ -28,6 +28,9 @@
 /* Shown in menu */
 "Contrast" = "Contrast";
 
+/* Shown in menu */
+"Input Source" = "Input Source";
+
 /* Version */
 "Copyright Ⓒ MonitorControl, " = "Copyright Ⓒ MonitorControl, ";
 
