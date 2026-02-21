@@ -45,6 +45,7 @@
 		C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100052EAA000100000001 /* RemoteControlServer.swift */; };
 		C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */; };
 		C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */; };
+		C0A100212EAA000100000001 /* RemoteInputSourceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */; };
 		C0A100192EAA000100000001 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001A2EAA000100000001 /* NIOCore */; };
 		C0A1001B2EAA000100000001 /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001C2EAA000100000001 /* NIOHTTP1 */; };
 		C0A1001D2EAA000100000001 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = C0A1001E2EAA000100000001 /* NIOPosix */; };
@@ -142,6 +143,7 @@
 		C0A100052EAA000100000001 /* RemoteControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlServer.swift; sourceTree = "<group>"; };
 		C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlTokenStore.swift; sourceTree = "<group>"; };
 		C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNIORequestHandler.swift; sourceTree = "<group>"; };
+		C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputSourceCatalog.swift; sourceTree = "<group>"; };
 		AA99E81527622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Main.strings"; sourceTree = "<group>"; };
 		AA99E81627622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InternetAccessPolicy.strings"; sourceTree = "<group>"; };
 		AA99E81727622EBE00413316 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 				C0A100052EAA000100000001 /* RemoteControlServer.swift */,
 				C0A100062EAA000100000001 /* RemoteControlTokenStore.swift */,
 				C0A100172EAA000100000001 /* RemoteNIORequestHandler.swift */,
+				C0A100202EAA000100000001 /* RemoteInputSourceCatalog.swift */,
 			);
 			path = RemoteControl;
 			sourceTree = "<group>";
@@ -682,6 +685,7 @@
 				F01B069F228221B7008E64DB /* SliderHandler.swift in Sources */,
 				C0A100152EAA000100000001 /* RemoteControlServer.swift in Sources */,
 				C0A100182EAA000100000001 /* RemoteNIORequestHandler.swift in Sources */,
+				C0A100212EAA000100000001 /* RemoteInputSourceCatalog.swift in Sources */,
 				C0A100162EAA000100000001 /* RemoteControlTokenStore.swift in Sources */,
 				C0A100122EAA000100000001 /* RemoteAPIRequestParser.swift in Sources */,
 				C0A100132EAA000100000001 /* RemoteAPIRouter.swift in Sources */,

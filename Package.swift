@@ -21,7 +21,6 @@ let package = Package(
       ],
       path: "MonitorControl/Support/RemoteControl",
       exclude: [
-        "RemoteAPIRouter.swift",
         "RemoteControlServer.swift",
         "RemoteControlTokenStore.swift",
         "RemoteDisplayController.swift",
@@ -29,6 +28,8 @@ let package = Package(
       sources: [
         "RemoteAPIModels.swift",
         "RemoteAPIRequestParser.swift",
+        "RemoteAPIRouter.swift",
+        "RemoteInputSourceCatalog.swift",
         "RemoteNIORequestHandler.swift",
       ]
     ),

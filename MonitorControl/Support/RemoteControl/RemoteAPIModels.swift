@@ -20,10 +20,42 @@ enum RemoteRequestedPowerState: String, Codable {
   case off
 }
 
+enum RemoteDisplayControllerError: Error {
+  case displayNotFound(displayId: UInt32)
+  case invalidValue(message: String)
+  case unsupportedOperation(message: String, displayIds: [UInt32])
+  case serviceUnavailable(message: String)
+  case operationFailed(message: String)
+}
+
+protocol RemoteDisplayService {
+  func getDisplays() throws -> [RemoteDisplayStatus]
+  func getInputs(displayId: UInt32) throws -> RemoteDisplayInputsResponse
+  func setBrightness(displayId: UInt32, valuePercent: Int) throws -> RemoteDisplayStatus
+  func setBrightnessForAll(valuePercent: Int) throws -> [RemoteDisplayStatus]
+  func setVolume(displayId: UInt32, valuePercent: Int) throws -> RemoteDisplayStatus
+  func setVolumeForAll(valuePercent: Int) throws -> [RemoteDisplayStatus]
+  func setPower(displayId: UInt32, state: RemoteRequestedPowerState) throws -> UInt32
+  func setPowerForAll(state: RemoteRequestedPowerState) throws -> [UInt32]
+  func setInput(displayId: UInt32, request: RemoteSetInputRequest) throws -> RemoteDisplayStatus
+}
+
 struct RemoteDisplayCapabilities: Codable {
   let brightness: Bool
   let volume: Bool
   let power: Bool
+}
+
+struct RemoteInputSource: Codable {
+  let code: Int
+  let name: String
+}
+
+struct RemoteDisplayInputStatus: Codable {
+  let supported: Bool
+  let bestEffort: Bool
+  let current: RemoteInputSource?
+  let available: [RemoteInputSource]
 }
 
 struct RemoteDisplayStatus: Codable {
@@ -37,6 +69,7 @@ struct RemoteDisplayStatus: Codable {
   let volume: Int?
   let powerState: RemotePowerState
   let capabilities: RemoteDisplayCapabilities
+  let input: RemoteDisplayInputStatus
 }
 
 struct RemoteHealthResponse: Codable {
@@ -56,6 +89,11 @@ struct RemoteSinglePowerResponse: Codable {
   let displayId: UInt32
   let requestedState: RemoteRequestedPowerState
   let accepted: Bool
+}
+
+struct RemoteDisplayInputsResponse: Codable {
+  let displayId: UInt32
+  let input: RemoteDisplayInputStatus
 }
 
 struct RemoteAllPowerResponse: Codable {
@@ -83,6 +121,11 @@ struct RemotePowerRequest: Decodable {
 
 struct RemoteVolumeRequest: Decodable {
   let value: Int
+}
+
+struct RemoteSetInputRequest: Decodable {
+  let name: String?
+  let code: Int?
 }
 
 struct RemoteHTTPRequest {

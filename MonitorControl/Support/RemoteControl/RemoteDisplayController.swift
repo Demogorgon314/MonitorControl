@@ -2,22 +2,23 @@
 
 import Foundation
 
-enum RemoteDisplayControllerError: Error {
-  case displayNotFound(displayId: UInt32)
-  case invalidValue(message: String)
-  case unsupportedOperation(message: String, displayIds: [UInt32])
-  case serviceUnavailable(message: String)
-  case operationFailed(message: String)
-}
-
-final class RemoteDisplayController {
+final class RemoteDisplayController: RemoteDisplayService {
   static let shared = RemoteDisplayController()
 
   private init() {}
 
   func getDisplays() throws -> [RemoteDisplayStatus] {
     try self.performOnMain {
-      DisplayManager.shared.getAllDisplays().map { self.buildStatus(for: $0) }
+      DisplayManager.shared.getAllDisplays().map { self.buildStatus(for: $0, refreshInputFromDDC: false) }
+    }
+  }
+
+  func getInputs(displayId: UInt32) throws -> RemoteDisplayInputsResponse {
+    try self.performOnMain {
+      guard let display = DisplayManager.shared.getAllDisplays().first(where: { $0.identifier == displayId }), !display.isDummy else {
+        throw RemoteDisplayControllerError.displayNotFound(displayId: displayId)
+      }
+      return RemoteDisplayInputsResponse(displayId: display.identifier, input: self.buildInputStatus(for: display, refreshFromDDC: true))
     }
   }
 
@@ -33,7 +34,7 @@ final class RemoteDisplayController {
       guard display.setBrightness(Float(valuePercent) / 100.0) else {
         throw RemoteDisplayControllerError.operationFailed(message: "failed to set brightness")
       }
-      return self.buildStatus(for: display)
+      return self.buildStatus(for: display, refreshInputFromDDC: false)
     }
   }
 
@@ -48,7 +49,7 @@ final class RemoteDisplayController {
         guard display.setBrightness(Float(valuePercent) / 100.0) else {
           throw RemoteDisplayControllerError.operationFailed(message: "failed to set brightness for display \(display.identifier)")
         }
-        statuses.append(self.buildStatus(for: display))
+        statuses.append(self.buildStatus(for: display, refreshInputFromDDC: false))
       }
       return statuses
     }
@@ -67,7 +68,7 @@ final class RemoteDisplayController {
         throw RemoteDisplayControllerError.unsupportedOperation(message: "volume control is not supported for display \(displayId)", displayIds: [displayId])
       }
       self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
-      return self.buildStatus(for: otherDisplay)
+      return self.buildStatus(for: otherDisplay, refreshInputFromDDC: false)
     }
   }
 
@@ -95,7 +96,7 @@ final class RemoteDisplayController {
       for otherDisplay in controllableDisplays {
         self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
       }
-      return controllableDisplays.map { self.buildStatus(for: $0) }
+      return controllableDisplays.map { self.buildStatus(for: $0, refreshInputFromDDC: false) }
     }
   }
 
@@ -147,13 +148,33 @@ final class RemoteDisplayController {
     }
   }
 
+  func setInput(displayId: UInt32, request: RemoteSetInputRequest) throws -> RemoteDisplayStatus {
+    try self.performOnMain {
+      try self.ensureServiceAvailable()
+      guard let display = DisplayManager.shared.getAllDisplays().first(where: { $0.identifier == displayId }), !display.isDummy else {
+        throw RemoteDisplayControllerError.displayNotFound(displayId: displayId)
+      }
+      guard let otherDisplay = display as? OtherDisplay, self.canControlInput(display: otherDisplay) else {
+        throw RemoteDisplayControllerError.unsupportedOperation(message: "input source control is not supported for display \(displayId)", displayIds: [displayId])
+      }
+
+      let targetCode = try self.resolveInputCode(request: request)
+      guard self.writeInputCode(display: otherDisplay, code: targetCode) else {
+        throw RemoteDisplayControllerError.operationFailed(message: "failed to set input source")
+      }
+
+      otherDisplay.savePref(Int(targetCode), for: .inputSelect)
+      return self.buildStatus(for: otherDisplay, refreshInputFromDDC: false)
+    }
+  }
+
   private func ensureServiceAvailable() throws {
     if app.sleepID != 0 || app.reconfigureID != 0 {
       throw RemoteDisplayControllerError.serviceUnavailable(message: "display service is temporarily unavailable")
     }
   }
 
-  private func buildStatus(for display: Display) -> RemoteDisplayStatus {
+  private func buildStatus(for display: Display, refreshInputFromDDC: Bool) -> RemoteDisplayStatus {
     let friendlyName = display.readPrefAsString(key: .friendlyName).isEmpty ? display.name : display.readPrefAsString(key: .friendlyName)
     let brightnessValue = max(0, min(100, Int((display.getBrightness() * 100).rounded())))
     let volumeValue = self.getVolumeValue(display: display)
@@ -165,6 +186,7 @@ final class RemoteDisplayController {
     let brightnessCapability = !display.isDummy && !display.readPrefAsBool(key: .unavailableDDC, for: .brightness)
     let volumeCapability = self.canControlVolume(display: display)
     let capabilities = RemoteDisplayCapabilities(brightness: brightnessCapability, volume: volumeCapability, power: hasPowerControl)
+    let input = self.buildInputStatus(for: display, refreshFromDDC: refreshInputFromDDC)
     return RemoteDisplayStatus(
       id: display.identifier,
       name: display.name,
@@ -175,7 +197,8 @@ final class RemoteDisplayController {
       brightness: brightnessValue,
       volume: volumeValue,
       powerState: powerState,
-      capabilities: capabilities
+      capabilities: capabilities,
+      input: input
     )
   }
 
@@ -204,6 +227,10 @@ final class RemoteDisplayController {
     !display.isDummy && !display.isSw() && !display.readPrefAsBool(key: .unavailableDDC, for: .audioSpeakerVolume)
   }
 
+  private func canControlInput(display: OtherDisplay) -> Bool {
+    !display.isDummy && !display.isSw() && !display.readPrefAsBool(key: .unavailableDDC, for: .inputSelect)
+  }
+
   private func getVolumeValue(display: Display) -> Int? {
     guard let otherDisplay = display as? OtherDisplay, self.canControlVolume(display: otherDisplay) else {
       return nil
@@ -222,6 +249,132 @@ final class RemoteDisplayController {
       display.writeDDCValues(command: .audioSpeakerVolume, value: display.convValueToDDC(for: .audioSpeakerVolume, from: normalized))
     }
     display.savePref(normalized, for: .audioSpeakerVolume)
+  }
+
+  private func buildInputStatus(for display: Display, refreshFromDDC: Bool) -> RemoteDisplayInputStatus {
+    guard let otherDisplay = display as? OtherDisplay, self.canControlInput(display: otherDisplay) else {
+      return RemoteDisplayInputStatus(supported: false, bestEffort: true, current: nil, available: [])
+    }
+
+    var available = RemoteInputSourceCatalog.defaultSources
+    var currentSource: RemoteInputSource?
+    if let currentCode = self.readCurrentInputCode(display: otherDisplay, refreshFromDDC: refreshFromDDC) {
+      currentSource = RemoteInputSourceCatalog.source(for: currentCode)
+      if let currentSource, !available.contains(where: { $0.code == currentSource.code }) {
+        available.insert(currentSource, at: 0)
+      }
+    }
+
+    return RemoteDisplayInputStatus(supported: true, bestEffort: true, current: currentSource, available: available)
+  }
+
+  private func readCurrentInputCode(display: OtherDisplay, refreshFromDDC: Bool) -> UInt16? {
+    if refreshFromDDC {
+      if Arm64DDC.isArm64, display.arm64ddc {
+        if let inputValue = self.probeArm64InputCode(display: display) {
+          display.savePref(Int(inputValue), for: .inputSelect)
+          return inputValue
+        }
+      } else if let inputValue = display.readDDCValues(for: .inputSelect, tries: 1, minReplyDelay: nil)?.current,
+                (0 ... 255).contains(inputValue) {
+        display.savePref(Int(inputValue), for: .inputSelect)
+        return inputValue
+      }
+    }
+
+    if display.prefExists(for: .inputSelect) {
+      let value = display.readPrefAsInt(for: .inputSelect)
+      if (0 ... 255).contains(value) {
+        return UInt16(value)
+      }
+    }
+
+    return nil
+  }
+
+  private func resolveInputCode(request: RemoteSetInputRequest) throws -> UInt16 {
+    let providedCode: UInt16?
+    if let rawCode = request.code {
+      guard (0 ... 255).contains(rawCode) else {
+        throw RemoteDisplayControllerError.invalidValue(message: "input code must be between 0 and 255")
+      }
+      providedCode = UInt16(rawCode)
+    } else {
+      providedCode = nil
+    }
+
+    let providedNameCode: UInt16?
+    if let rawName = request.name, !rawName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      guard let parsedCode = RemoteInputSourceCatalog.code(forName: rawName) else {
+        throw RemoteDisplayControllerError.invalidValue(message: "unsupported input source name")
+      }
+      providedNameCode = parsedCode
+    } else {
+      providedNameCode = nil
+    }
+
+    guard providedCode != nil || providedNameCode != nil else {
+      throw RemoteDisplayControllerError.invalidValue(message: "request must include input name or code")
+    }
+
+    if let providedCode, let providedNameCode, providedCode != providedNameCode {
+      throw RemoteDisplayControllerError.invalidValue(message: "input name and code do not match")
+    }
+
+    return providedCode ?? providedNameCode ?? 0
+  }
+
+  private func writeInputCode(display: OtherDisplay, code: UInt16) -> Bool {
+    var controlCodes = display.getRemapControlCodes(command: .inputSelect)
+    if controlCodes.isEmpty {
+      controlCodes = [Command.inputSelect.rawValue]
+    }
+
+    var didSucceed = false
+    DisplayManager.shared.globalDDCQueue.sync {
+      for controlCode in controlCodes {
+        let writeSucceeded: Bool
+        if Arm64DDC.isArm64 {
+          if display.arm64ddc {
+            writeSucceeded = Arm64DDC.write(service: display.arm64avService, command: controlCode, value: code) ||
+              Arm64DDC.write(service: display.arm64avService, command: controlCode, value: code, dataAddress: ARM64_DDC_ALTERNATE_DATA_ADDRESS)
+          } else {
+            writeSucceeded = false
+          }
+        } else {
+          writeSucceeded = display.ddc?.write(command: controlCode, value: code, errorRecoveryWaitTime: 2000) ?? false
+        }
+        didSucceed = didSucceed || writeSucceeded
+      }
+    }
+    return didSucceed
+  }
+
+  private func probeArm64InputCode(display: OtherDisplay) -> UInt16? {
+    if let value = Arm64DDC.read(
+      service: display.arm64avService,
+      command: Command.inputSelect.rawValue,
+      numOfWriteCycles: 1,
+      numOfRetryAttemps: 0,
+      validateChecksum: false
+    )?.current,
+      (0 ... 255).contains(value) {
+      return value
+    }
+
+    if let value = Arm64DDC.read(
+      service: display.arm64avService,
+      command: Command.inputSelect.rawValue,
+      numOfWriteCycles: 1,
+      numOfRetryAttemps: 0,
+      dataAddress: ARM64_DDC_ALTERNATE_DATA_ADDRESS,
+      validateChecksum: false
+    )?.current,
+      (0 ... 255).contains(value) {
+      return value
+    }
+
+    return nil
   }
 
   private func performOnMain<T>(_ block: @escaping () throws -> T) throws -> T {

@@ -3,10 +3,10 @@
 import Foundation
 
 final class RemoteAPIRouter {
-  private let displayController: RemoteDisplayController
+  private let displayController: RemoteDisplayService
   private let tokenProvider: () -> String
 
-  init(displayController: RemoteDisplayController, tokenProvider: @escaping () -> String) {
+  init(displayController: RemoteDisplayService, tokenProvider: @escaping () -> String) {
     self.displayController = displayController
     self.tokenProvider = tokenProvider
   }
@@ -42,6 +42,15 @@ final class RemoteAPIRouter {
         return self.mapDisplayError(error)
       }
     }
+
+    if let displayRoute = self.parseDisplayRoute(path), displayRoute.operation == "inputs" {
+      do {
+        return .json(statusCode: 200, payload: try self.displayController.getInputs(displayId: displayRoute.displayId))
+      } catch {
+        return self.mapDisplayError(error)
+      }
+    }
+
     if path.hasPrefix("/api/v1/displays") {
       return .error(statusCode: 405, code: "method_not_allowed", message: "method is not allowed")
     }
@@ -84,15 +93,15 @@ final class RemoteAPIRouter {
   }
 
   private func handlePostWithDisplayId(path: String, request: RemoteHTTPRequest) -> RemoteHTTPResponse {
-    let components = path.split(separator: "/")
-    guard components.count == 5, components[0] == "api", components[1] == "v1", components[2] == "displays", let displayId = UInt32(components[3]) else {
+    guard let displayRoute = self.parseDisplayRoute(path) else {
       if path.hasPrefix("/api/v1/displays") {
         return .error(statusCode: 404, code: "not_found", message: "route not found")
       }
       return .error(statusCode: 404, code: "not_found", message: "route not found")
     }
 
-    let operation = String(components[4])
+    let displayId = displayRoute.displayId
+    let operation = displayRoute.operation
     if operation == "brightness" {
       guard let payload: RemoteBrightnessRequest = self.decodeJSONBody(request: request) else {
         return .error(statusCode: 400, code: "invalid_json", message: "request body must be valid JSON")
@@ -127,7 +136,26 @@ final class RemoteAPIRouter {
       }
     }
 
+    if operation == "input" {
+      guard let payload: RemoteSetInputRequest = self.decodeJSONBody(request: request) else {
+        return .error(statusCode: 400, code: "invalid_json", message: "request body must be valid JSON")
+      }
+      do {
+        return .json(statusCode: 200, payload: RemoteSingleDisplayResponse(display: try self.displayController.setInput(displayId: displayId, request: payload)))
+      } catch {
+        return self.mapDisplayError(error)
+      }
+    }
+
     return .error(statusCode: 404, code: "not_found", message: "route not found")
+  }
+
+  private func parseDisplayRoute(_ path: String) -> (displayId: UInt32, operation: String)? {
+    let components = path.split(separator: "/")
+    guard components.count == 5, components[0] == "api", components[1] == "v1", components[2] == "displays", let displayId = UInt32(components[3]) else {
+      return nil
+    }
+    return (displayId, String(components[4]))
   }
 
   private func isAuthorized(request: RemoteHTTPRequest) -> Bool {

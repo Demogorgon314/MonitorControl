@@ -29,7 +29,7 @@ final class RemoteControlServer {
   func start(port: UInt16, tokenProvider: @escaping () -> String) throws {
     self.stop()
 
-    let router = RemoteAPIRouter(displayController: .shared, tokenProvider: tokenProvider)
+    let router = RemoteAPIRouter(displayController: RemoteDisplayController.shared, tokenProvider: tokenProvider)
     let group = MultiThreadedEventLoopGroup(numberOfThreads: max(1, System.coreCount))
 
     let bootstrap = ServerBootstrap(group: group)

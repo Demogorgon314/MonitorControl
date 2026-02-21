@@ -110,17 +110,20 @@ MonitorControl can expose a local network HTTP API for remote control (for examp
 - All endpoints require `Authorization: Bearer <token>`.
 - API base path: `/api/v1`.
 - `power` endpoints use software simulation (brightness 0 / restore previous brightness), not hardware DDC power mode.
+- Input source data is returned as best-effort (`current` + standard switchable input list), because physical cable detection is display-dependent.
 
 Endpoints:
 
 - `GET /api/v1/health`
 - `GET /api/v1/displays`
+- `GET /api/v1/displays/{id}/inputs`
 - `POST /api/v1/displays/{id}/brightness` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/brightness` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/{id}/volume` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/volume` with `{ "value": 0..100 }`
 - `POST /api/v1/displays/{id}/power` with `{ "state": "on" | "off" }`
 - `POST /api/v1/displays/power` with `{ "state": "on" | "off" }`
+- `POST /api/v1/displays/{id}/input` with `{ "name": "HDMI-1|HDMI-2|DP-1|DP-2|DVI-1|DVI-2|VGA-1|VGA-2" }` or `{ "code": 0..255 }`
 
 Examples:
 
@@ -130,6 +133,9 @@ HOST="192.168.1.10:51423"
 
 curl -H "Authorization: Bearer $TOKEN" \
   "http://$HOST/api/v1/displays"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://$HOST/api/v1/displays/69733184/inputs"
 
 curl -X POST \
   -H "Authorization: Bearer $TOKEN" \
@@ -148,6 +154,12 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"state":"off"}' \
   "http://$HOST/api/v1/displays/power"
+
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"HDMI-1"}' \
+  "http://$HOST/api/v1/displays/69733184/input"
 ```
 
 ## Contributing to the project
