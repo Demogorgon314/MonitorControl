@@ -15,6 +15,29 @@
 - `swiftlint`: run lint checks configured in `.swiftlint.yml`.
 - `bartycrouch update -x && bartycrouch lint -x`: update and validate localization strings when changing i18n content.
 
+## Packaging Workflow (.app + .dmg)
+- Always use a signed Release build for packaging. Avoid `CODE_SIGNING_ALLOWED=NO`, which creates ad-hoc signatures and can break Accessibility permission recognition.
+- Build signed app:
+  - `mkdir -p build/logs build/DerivedDataSigned`
+  - `xcodebuild -project MonitorControl.xcodeproj -scheme MonitorControl -configuration Release -derivedDataPath build/DerivedDataSigned build > build/logs/xcodebuild-release-signed.log 2>&1`
+- Read version/build from the packaged app:
+  - `VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/DerivedDataSigned/Build/Products/Release/MonitorControl.app/Contents/Info.plist)`
+  - `BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" build/DerivedDataSigned/Build/Products/Release/MonitorControl.app/Contents/Info.plist)`
+- Create `.app` and `.dmg` artifacts:
+  - `mkdir -p build/artifacts-signed "build/dmg-root-${VERSION}-${BUILD}-signed"`
+  - `ditto build/DerivedDataSigned/Build/Products/Release/MonitorControl.app "build/artifacts-signed/MonitorControl-${VERSION}-signed.app"`
+  - `ditto build/DerivedDataSigned/Build/Products/Release/MonitorControl.app "build/dmg-root-${VERSION}-${BUILD}-signed/MonitorControl.app"`
+  - `ln -s /Applications "build/dmg-root-${VERSION}-${BUILD}-signed/Applications"`
+  - `hdiutil create -volname MonitorControl -srcfolder "build/dmg-root-${VERSION}-${BUILD}-signed" -ov -format UDZO "build/artifacts-signed/MonitorControl-${VERSION}-signed.dmg"`
+- Sign and verify:
+  - `codesign --force --timestamp --sign "<APPLE_DEVELOPMENT_IDENTITY>" "build/artifacts-signed/MonitorControl-${VERSION}-signed.dmg"`
+  - `codesign --verify --deep --strict --verbose=2 "build/artifacts-signed/MonitorControl-${VERSION}-signed.app"`
+  - `codesign --verify --verbose=2 "build/artifacts-signed/MonitorControl-${VERSION}-signed.dmg"`
+- Upload to GitHub Releases:
+  - Create draft release: `gh release create "v${VERSION}" "build/artifacts-signed/MonitorControl-${VERSION}-signed.dmg" --repo Demogorgon314/MonitorControl --title "v${VERSION}" --notes "Signed macOS dmg build." --draft`
+  - Update existing release asset: `gh release upload "v${VERSION}" "build/artifacts-signed/MonitorControl-${VERSION}-signed.dmg" --repo Demogorgon314/MonitorControl --clobber`
+- For external distribution, prefer Developer ID signing + notarization + stapling before publishing.
+
 ## Coding Style & Naming Conventions
 Use Swift conventions and keep files focused by responsibility. Follow `.swiftformat` defaults used here: 2-space indentation and no padded operators. Use `UpperCamelCase` for types and `lowerCamelCase` for properties/functions. Match existing module boundaries (for example, remote API logic belongs under `Support/RemoteControl`).
 

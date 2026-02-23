@@ -110,6 +110,7 @@ MonitorControl can expose a local network HTTP API for remote control (for examp
 - All endpoints require `Authorization: Bearer <token>`.
 - API base path: `/api/v1`.
 - `power` endpoints use software simulation (brightness 0 / restore previous brightness), not hardware DDC power mode.
+- Raising brightness above 0 (for example from MonitorControl on macOS or via the brightness API) clears simulated `powerState=off` and reports `on`; brightness 0 alone does not imply `off`.
 - Input source data is returned as best-effort (`current` + standard switchable input list), because physical cable detection is display-dependent.
 
 Endpoints:

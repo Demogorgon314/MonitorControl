@@ -15,6 +15,7 @@ final class RemoteDisplayController: RemoteDisplayService {
 
   static let shared = RemoteDisplayController()
   private let inputProbeCacheTTL: TimeInterval = 3
+  private let simulatedPowerWakeBrightnessThreshold: Float = 0.001
   private var inputProbeCache: [UInt32: InputProbeCacheEntry] = [:]
 
   private init() {}
@@ -189,12 +190,13 @@ final class RemoteDisplayController: RemoteDisplayService {
 
   private func buildStatus(for display: Display, refreshInputFromDDC: Bool) -> RemoteDisplayStatus {
     let friendlyName = display.readPrefAsString(key: .friendlyName).isEmpty ? display.name : display.readPrefAsString(key: .friendlyName)
-    let brightnessValue = max(0, min(100, Int((display.getBrightness() * 100).rounded())))
+    let brightness = max(0, min(1, display.getBrightness()))
+    let brightnessValue = max(0, min(100, Int((brightness * 100).rounded())))
     let volumeValue = self.getVolumeValue(display: display)
     let type: RemoteDisplayType = display is AppleDisplay ? .apple : .other
 
     let hasPowerControl = !display.isDummy
-    let powerState: RemotePowerState = display.isDummy ? .unknown : (display.readPrefAsBool(key: .remoteControlSimulatedPowerOff) ? .off : .on)
+    let powerState = self.resolveSimulatedPowerState(display: display, brightness: brightness)
 
     let brightnessCapability = !display.isDummy && !display.readPrefAsBool(key: .unavailableDDC, for: .brightness)
     let volumeCapability = self.canControlVolume(display: display)
@@ -213,6 +215,20 @@ final class RemoteDisplayController: RemoteDisplayService {
       capabilities: capabilities,
       input: input
     )
+  }
+
+  private func resolveSimulatedPowerState(display: Display, brightness: Float) -> RemotePowerState {
+    guard !display.isDummy else {
+      return .unknown
+    }
+
+    let isSimulatedPowerOff = display.readPrefAsBool(key: .remoteControlSimulatedPowerOff)
+    if isSimulatedPowerOff, brightness > self.simulatedPowerWakeBrightnessThreshold {
+      display.savePref(false, key: .remoteControlSimulatedPowerOff)
+      return .on
+    }
+
+    return isSimulatedPowerOff ? .off : .on
   }
 
   private func rememberBrightnessForSimulatedWake(display: Display) {
