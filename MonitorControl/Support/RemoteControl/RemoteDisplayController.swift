@@ -47,6 +47,7 @@ final class RemoteDisplayController: RemoteDisplayService {
       guard display.setBrightness(Float(valuePercent) / 100.0) else {
         throw RemoteDisplayControllerError.operationFailed(message: "failed to set brightness")
       }
+      self.syncBrightnessSliderIfPresent(for: display)
       return self.buildStatus(for: display, refreshInputFromDDC: false)
     }
   }
@@ -62,6 +63,7 @@ final class RemoteDisplayController: RemoteDisplayService {
         guard display.setBrightness(Float(valuePercent) / 100.0) else {
           throw RemoteDisplayControllerError.operationFailed(message: "failed to set brightness for display \(display.identifier)")
         }
+        self.syncBrightnessSliderIfPresent(for: display)
         statuses.append(self.buildStatus(for: display, refreshInputFromDDC: false))
       }
       return statuses
@@ -81,6 +83,7 @@ final class RemoteDisplayController: RemoteDisplayService {
         throw RemoteDisplayControllerError.unsupportedOperation(message: "volume control is not supported for display \(displayId)", displayIds: [displayId])
       }
       self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
+      self.syncVolumeSliderIfPresent(for: otherDisplay)
       return self.buildStatus(for: otherDisplay, refreshInputFromDDC: false)
     }
   }
@@ -108,6 +111,7 @@ final class RemoteDisplayController: RemoteDisplayService {
 
       for otherDisplay in controllableDisplays {
         self.applyVolume(valuePercent: valuePercent, to: otherDisplay)
+        self.syncVolumeSliderIfPresent(for: otherDisplay)
       }
       return controllableDisplays.map { self.buildStatus(for: $0, refreshInputFromDDC: false) }
     }
@@ -266,6 +270,22 @@ final class RemoteDisplayController: RemoteDisplayService {
     }
     let value = otherDisplay.setupSliderCurrentValue(command: .audioSpeakerVolume)
     return max(0, min(100, Int((value * 100).rounded())))
+  }
+
+  private func syncBrightnessSliderIfPresent(for display: Display) {
+    guard let slider = display.sliderHandler[.brightness] else {
+      return
+    }
+    let value = max(0, min(1, display.getBrightness()))
+    slider.setValue(value, displayID: display.identifier)
+  }
+
+  private func syncVolumeSliderIfPresent(for display: OtherDisplay) {
+    guard let slider = display.sliderHandler[.audioSpeakerVolume] else {
+      return
+    }
+    let value = max(0, min(1, display.setupSliderCurrentValue(command: .audioSpeakerVolume)))
+    slider.setValue(value, displayID: display.identifier)
   }
 
   private func applyVolume(valuePercent: Int, to display: OtherDisplay) {
